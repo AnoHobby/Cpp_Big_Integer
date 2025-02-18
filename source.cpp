@@ -95,22 +95,24 @@ public:
     auto operator*(const BigInt& right)const {
         BigInt result;
         result.is_negative = is_negative != right.is_negative;
-        result.digits = decltype(result.digits)(digits.size() + right.digits.size(),0);
-        for (int k = 0; k < result.digits.size()-1; ++k) {
-            std::uint64_t sum = 0;
-            for (int i = 0; i <= k; ++i) {
+        const auto max_size = digits.size() + right.digits.size();
+        result.digits.reserve(max_size);
+        std::uint64_t carry=0;
+        for (auto k = 0; k < max_size-1; ++k) {
+        //for (auto k = 0,carry; k < max_size-(carry==0); ++k) {//短いけどループ一回分増える
+            std::uint64_t sum = carry;
+            for (auto i = 0; i <= k; ++i) {
                 const auto j = k - i;
                 if (i < digits.size() && j < right.digits.size()) {
                     sum += static_cast<std::uint64_t>(digits[i]) * right.digits[j];
                 }
             }
-            if (sum >= BASE) {
-                result.digits[k + 1] += sum >>CHUNK_BIT_SIZE;
+            if (carry = sum >> CHUNK_BIT_SIZE) {
                 sum &= BASE-1;
             }
-            result.digits[k] +=sum;
+            result.digits.push_back(sum);
         }
-        if (!result.digits.back())result.digits.pop_back();
+        if (carry)result.digits.push_back(carry);
         return result;
     }
 };
