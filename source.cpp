@@ -9,11 +9,8 @@ import <iomanip>;
 import <cstdint>;
 import <ranges>;
 import <cmath>;
-import <compare>;
-import <optional>;
 class BigInt {
 private:
-    //std::optional<std::vector<std::uint32_t>>
     std::vector<std::uint32_t> digits; // 下位桁から先頭に格納
     //123->[3,2,1]
     bool is_negative;
@@ -95,6 +92,27 @@ public:
         result.is_negative ^= 1;
         return result;
     }
+    auto operator*(const BigInt& right)const {
+        BigInt result;
+        result.is_negative = is_negative != right.is_negative;
+        result.digits = decltype(result.digits)(digits.size() + right.digits.size(),0);
+        for (int k = 0; k < result.digits.size()-1; ++k) {
+            std::uint64_t sum = 0;
+            for (int i = 0; i <= k; ++i) {
+                const auto j = k - i;
+                if (i < digits.size() && j < right.digits.size()) {
+                    sum += static_cast<std::uint64_t>(digits[i]) * right.digits[j];
+                }
+            }
+            if (sum >= BASE) {
+                result.digits[k + 1] += sum >>CHUNK_BIT_SIZE;
+                sum &= BASE-1;
+            }
+            result.digits[k] +=sum;
+        }
+        if (!result.digits.back())result.digits.pop_back();
+        return result;
+    }
 };
 BigInt BigInt::operator+(const BigInt& right)const {
     if (is_negative != right.is_negative) {
@@ -141,9 +159,9 @@ BigInt BigInt::operator-(const BigInt& right)const {
 static BigInt operator""_n(const char* c) {
     return BigInt(c);
 }
-int main() {
 
-    auto a=-1_n,b=-2_n;
-    std::cout <<(a+b).to_string() << std::endl;
-	return 0;
+int main() {
+    auto a=1000_n,b=20000000_n;
+    std::cout <<(a*b).to_string() << std::endl;
+    return 0;
 }
